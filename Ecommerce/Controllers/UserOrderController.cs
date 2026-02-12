@@ -1,4 +1,5 @@
-﻿using Ecommerce.Repositories;
+using Ecommerce.Exceptions;
+using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,16 +8,25 @@ namespace Ecommerce.Controllers
     [Authorize]
     public class UserOrderController : Controller
     {
-        private readonly IUserOrderRepository _userOrderRepo;
+        private readonly IOrderService _orderService;
 
-        public UserOrderController(IUserOrderRepository userOrderRepo)
+        public UserOrderController(IOrderService orderService)
         {
-            _userOrderRepo = userOrderRepo;
+            _orderService = orderService;
         }
+
         public async Task<IActionResult> UserOrders()
         {
-            var orders = await _userOrderRepo.UserOrders();
-            return View(orders);
+            try
+            {
+                var orders = await _orderService.GetUserOrdersAsync();
+                return View(orders);
+            }
+            catch (AppException ex)
+            {
+                TempData["OrderError"] = ex.Message;
+                return View(Enumerable.Empty<Order>());
+            }
         }
     }
 }
