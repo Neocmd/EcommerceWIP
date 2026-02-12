@@ -1,0 +1,165 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - 'release/*'
+      - 'hotfix/*'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  build_test:
+    name: Build, Format, Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 7
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Restore
+        run: dotnet restore Ecommerce.sln
+
+      - name: Verify formatting
+        run: dotnet format Ecommerce.sln --verify-no-changes
+
+      - name: Build
+        run: dotnet build Ecommerce.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Ecommerce.sln --configuration Release --no-build --verbosity normal
+
+  db_migration_check:
+    name: SQL Server Migration Validation
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          SA_PASSWORD: ${{ secrets.CI_SQL_SA_PASSWORD }}
+        ports:
+          - 1433:1433
+
+    env:
+      ConnectionStrings__DefaultConnection: Server=127.0.0.1,1433;Database=EcommerceCi;User Id=sa;Password=${{ secrets.CI_SQL_SA_PASSWORD }};TrustServerCertificate=True;MultipleActiveResultSets=true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 7
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Install EF Tool
+        run: dotnet tool install --global dotnet-ef --version 7.*
+
+      - name: Add .NET tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Restore
+        run: dotnet restore Ecommerce.sln
+
+      - name: Wait for SQL Server and apply migrations
+        shell: bash
+        run: |
+          for i in {1..20}; do
+            if dotnet ef database update --project Ecommerce --startup-project Ecommerce; then
+              echo "Database update succeeded"
+              exit 0
+            fi
+            echo "Database not ready yet (attempt $i), retrying in 5s..."
+            sleep 5
+          done
+          echo "Database update failed after retries"
+          exit 1
+
+      - name: Generate idempotent migration script
+        run: dotnet ef migrations script --idempotent --project Ecommerce --startup-project Ecommerce --output migration.sql
+
+      - name: Rollback to baseline and re-apply
+        run: |
+          dotnet ef database update 0 --project Ecommerce --startup-project Ecommerce
+          dotnet ef database update --project Ecommerce --startup-project Ecommerce
+
+  dependency_review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+
+  ui_smoke:
+    name: MVC Smoke Test
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          SA_PASSWORD: ${{ secrets.CI_SQL_SA_PASSWORD }}
+        ports:
+          - 1433:1433
+
+    env:
+      ASPNETCORE_URLS: http://127.0.0.1:5080
+      ConnectionStrings__DefaultConnection: Server=127.0.0.1,1433;Database=EcommerceCiSmoke;User Id=sa;Password=${{ secrets.CI_SQL_SA_PASSWORD }};TrustServerCertificate=True;MultipleActiveResultSets=true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 7
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Install EF Tool
+        run: dotnet tool install --global dotnet-ef --version 7.*
+
+      - name: Add .NET tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Restore
+        run: dotnet restore Ecommerce.sln
+
+      - name: Apply migrations
+        shell: bash
+        run: |
+          for i in {1..20}; do
+            if dotnet ef database update --project Ecommerce --startup-project Ecommerce; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+      - name: Run app and smoke check
+        shell: bash
+        run: |
+          dotnet run --project Ecommerce/Ecommerce.csproj --configuration Release > app.log 2>&1 &
+          APP_PID=$!
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:5080/ > /dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:5080/Home/Index > /dev/null
+          curl -fsS http://127.0.0.1:5080/Cart/GetUserCart > /dev/null || true
+          kill $APP_PID

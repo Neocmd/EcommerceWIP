@@ -1,0 +1,41 @@
+name: Release Candidate
+
+on:
+  push:
+    branches:
+      - 'release/*'
+
+permissions:
+  contents: read
+
+jobs:
+  build_test_package:
+    name: Build, Test, Package Artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 7
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Restore
+        run: dotnet restore Ecommerce.sln
+
+      - name: Build
+        run: dotnet build Ecommerce.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Ecommerce.sln --configuration Release --no-build --verbosity normal
+
+      - name: Publish app
+        run: dotnet publish Ecommerce/Ecommerce.csproj --configuration Release --output out
+
+      - name: Upload release candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecommerce-release-candidate
+          path: out
