@@ -1,5 +1,3 @@
-﻿using Ecommerce.Data;
-using Ecommerce.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Repositories
@@ -15,33 +13,40 @@ namespace Ecommerce.Repositories
 
         public async Task<IEnumerable<Genre>> Genres()
         {
-            return await _db.Genres.ToListAsync();
+            return await _db.Genres.OrderBy(x => x.GenreName).ToListAsync();
         }
+
         public async Task<IEnumerable<Book>> GetBooks(string sTerm = "", int genreId = 0)
         {
-            sTerm = sTerm.ToLower();
-            IEnumerable<Book> books = await (from book in _db.Books
-                         join genre in _db.Genres
-                         on book.GenreId equals genre.Id
-                         where string.IsNullOrWhiteSpace(sTerm) || (book != null && book.BookName.ToLower().StartsWith(sTerm))
-                         select new Book
-                         {
-                             Id = book.Id,
-                             Image = book.Image,
-                             AuthorName = book.AuthorName,
-                             BookName = book.BookName,
-                             GenreId = book.GenreId,
-                             Price = book.Price,
-                             GenreName = genre.GenreName
-                         }
-                         ).ToListAsync();
+            var query = _db.Books
+                .Include(x => x.Genre)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(sTerm))
+            {
+                var loweredTerm = sTerm.Trim().ToLower();
+                query = query.Where(book => book.BookName.ToLower().StartsWith(loweredTerm));
+            }
+
             if (genreId > 0)
             {
-
-                books = books.Where(a => a.GenreId == genreId).ToList();
+                query = query.Where(book => book.GenreId == genreId);
             }
-            return books;
 
+            var books = await query
+                .Select(book => new Book
+                {
+                    Id = book.Id,
+                    Image = book.Image,
+                    AuthorName = book.AuthorName,
+                    BookName = book.BookName,
+                    GenreId = book.GenreId,
+                    Price = book.Price,
+                    GenreName = book.Genre.GenreName
+                })
+                .ToListAsync();
+
+            return books;
         }
     }
 }

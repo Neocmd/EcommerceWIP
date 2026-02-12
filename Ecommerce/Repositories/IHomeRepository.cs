@@ -1,6 +1,4 @@
-﻿using Ecommerce.Models;
-
-namespace Ecommerce
+namespace Ecommerce.Repositories
 {
     public interface IHomeRepository
     {

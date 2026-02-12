@@ -1,38 +1,36 @@
-﻿namespace Ecommerce.Proxy
+namespace Ecommerce.Proxy
 {
     public class ProxyBookRepository : IBookRepository
     {
         private readonly IBookRepository _bookRepository;
-        private readonly Dictionary<int, Book> bookCache = new Dictionary<int, Book>();
-        private bool isAuthenticated = false;
-        public ProxyBookRepository(IBookRepository bookRepository) 
+        private readonly Dictionary<int, Book> _bookCache = new();
+        private readonly bool _isAuthenticated;
+
+        public ProxyBookRepository(IBookRepository bookRepository)
         {
-            _bookRepository= bookRepository;
+            _bookRepository = bookRepository;
+            _isAuthenticated = false;
         }
 
-        public Book GetBook(int bookId)
+        public Book? GetBook(int bookId)
         {
-            if (!isAuthenticated)
+            if (!_isAuthenticated)
             {
-                Console.WriteLine("Utente non autenticato");
-
                 return null;
             }
-            
-            if (bookCache.TryGetValue(bookId, out var cachedBook)) 
+
+            if (_bookCache.TryGetValue(bookId, out var cachedBook))
             {
                 return cachedBook;
             }
 
             var book = _bookRepository.GetBook(bookId);
-            if (book != null) 
+            if (book is not null)
             {
-                bookCache[bookId] = book;
+                _bookCache[bookId] = book;
             }
 
             return book;
         }
-
-        
     }
 }

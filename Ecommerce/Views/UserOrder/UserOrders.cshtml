@@ -2,6 +2,11 @@
 @{
 }
 <div style="width:100%" class="mt-2">
+    @if (TempData["OrderError"] is string orderError && !string.IsNullOrWhiteSpace(orderError))
+    {
+        <div class="alert alert-danger" role="alert">@orderError</div>
+    }
+
     <a href="/Identity/Account/Manage" class="btn btn-primary my-2">Back</a>
 
     <h4>My Orders</h4>
@@ -71,7 +76,6 @@
         <h5>No orders</h5>
     }
 </div>
-
 
 
 

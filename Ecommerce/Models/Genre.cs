@@ -1,11 +1,8 @@
-﻿using Ecommerce.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ecommerce.Models
 {
-
-
     [Table("Genre")]
     public class Genre
     {
@@ -13,8 +10,8 @@ namespace Ecommerce.Models
 
         [Required]
         [MaxLength(40)]
-        public string GenreName { get; set; }
-        public List<Book> Books { get; set; }
+        public string GenreName { get; set; } = string.Empty;
+
+        public List<Book> Books { get; set; } = new();
     }
-    
 }

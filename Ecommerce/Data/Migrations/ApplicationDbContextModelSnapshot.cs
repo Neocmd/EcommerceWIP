@@ -46,8 +46,9 @@ namespace Ecommerce.Data.Migrations
                     b.Property<string>("Image")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -73,8 +74,9 @@ namespace Ecommerce.Data.Migrations
                     b.Property<int>("ShoppingCartId")
                         .HasColumnType("int");
 
-                    b.Property<double>("UnitPrice")
-                        .HasColumnType("float");
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -82,7 +84,12 @@ namespace Ecommerce.Data.Migrations
 
                     b.HasIndex("ShoppingCartId");
 
-                    b.ToTable("CartDetail");
+                    b.ToTable("CartDetail", t =>
+                        {
+                            t.HasCheckConstraint("CK_CartDetail_Quantity", "[Quantity] > 0");
+
+                            t.HasCheckConstraint("CK_CartDetail_UnitPrice", "[UnitPrice] > 0");
+                        });
                 });
 
             modelBuilder.Entity("Ecommerce.Models.Genre", b =>
@@ -121,11 +128,14 @@ namespace Ecommerce.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OrderStatusId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Order");
                 });
@@ -147,8 +157,9 @@ namespace Ecommerce.Data.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<double>("UnitPrice")
-                        .HasColumnType("float");
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -156,7 +167,12 @@ namespace Ecommerce.Data.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderDetail");
+                    b.ToTable("OrderDetail", t =>
+                        {
+                            t.HasCheckConstraint("CK_OrderDetail_Quantity", "[Quantity] > 0");
+
+                            t.HasCheckConstraint("CK_OrderDetail_UnitPrice", "[UnitPrice] > 0");
+                        });
                 });
 
             modelBuilder.Entity("Ecommerce.Models.OrderStatus", b =>
@@ -192,9 +208,13 @@ namespace Ecommerce.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("ShoppingCart");
                 });

@@ -1,4 +1,3 @@
-﻿using Ecommerce;
 using Ecommerce.Models;
 using Ecommerce.Models.BDM;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +18,9 @@ namespace Ecommerce.Controllers
 
         public async Task<IActionResult> Index(string sterm = "", int genreId = 0)
         {
-            IEnumerable<Book> books = await _homeRepository.GetBooks(sterm, genreId);
-            IEnumerable<Genre> genres = await _homeRepository.Genres();
-            BookDisplayModel bookModel = new BookDisplayModel
+            var books = await _homeRepository.GetBooks(sterm, genreId);
+            var genres = await _homeRepository.Genres();
+            var bookModel = new BookDisplayModel
             {
                 Books = books,
                 Genres = genres,

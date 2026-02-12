@@ -1,0 +1,57 @@
+name: Bug Report
+about: Report a defect with reproducible evidence
+labels: ["type:bug"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Bug summary
+      placeholder: Short issue description
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_steps
+    attributes:
+      label: Reproduction steps
+      placeholder: Numbered steps to reproduce
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impacted_area
+    attributes:
+      label: Impacted area
+      options:
+        - backend
+        - frontend
+        - database
+        - auth
+        - release
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - sev3
+        - sev2
+        - sev1
+    validations:
+      required: true

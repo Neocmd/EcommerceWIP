@@ -1,0 +1,11 @@
+# Default owner for all paths in this repository.
+* @Neocmd
+
+# Domain ownership (all mapped to current maintainer).
+Ecommerce/Controllers/ @Neocmd
+Ecommerce/Repositories/ @Neocmd
+Ecommerce/Data/ @Neocmd
+Ecommerce/Views/ @Neocmd
+Ecommerce/wwwroot/ @Neocmd
+.github/workflows/ @Neocmd
+docs/ @Neocmd

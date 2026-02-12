@@ -1,4 +1,4 @@
-﻿using Microsoft.Build.Framework;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ecommerce.Models
@@ -7,15 +7,21 @@ namespace Ecommerce.Models
     public class OrderDetail
     {
         public int Id { get; set; }
+
         [Required]
         public int OrderId { get; set; }
+
         [Required]
         public int BookId { get; set; }
+
         [Required]
         public int Quantity { get; set; }
+
         [Required]
-        public double UnitPrice { get; set; }
-        public Order Order { get; set; }
-        public Book Book { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal UnitPrice { get; set; }
+
+        public Order Order { get; set; } = null!;
+        public Book Book { get; set; } = null!;
     }
 }

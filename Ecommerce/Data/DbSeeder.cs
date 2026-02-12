@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
 using Ecommerce.Constants;
-using System;
+using Microsoft.AspNetCore.Identity;
 
 namespace Ecommerce.Data
 {
@@ -8,13 +7,14 @@ namespace Ecommerce.Data
     {
         public static async Task SeedDefaultData(IServiceProvider service)
         {
-            var userMgr = service.GetService<UserManager<IdentityUser>>();
-            var roleMgr = service.GetService<RoleManager<IdentityRole>>();
-            //adding some roles to db
+            var userMgr = service.GetService<UserManager<IdentityUser>>()
+                ?? throw new InvalidOperationException("UserManager service is unavailable.");
+
+            var roleMgr = service.GetService<RoleManager<IdentityRole>>()
+                ?? throw new InvalidOperationException("RoleManager service is unavailable.");
+
             await roleMgr.CreateAsync(new IdentityRole(Roles.Admin.ToString()));
             await roleMgr.CreateAsync(new IdentityRole(Roles.User.ToString()));
-
-            // create admin user
 
             var admin = new IdentityUser
             {
@@ -23,15 +23,12 @@ namespace Ecommerce.Data
                 EmailConfirmed = true
             };
 
-            var userInDb = await userMgr.FindByEmailAsync(admin.Email);
+            var userInDb = await userMgr.FindByEmailAsync(admin.Email!);
             if (userInDb is null)
             {
                 await userMgr.CreateAsync(admin, "Admin@123");
-                await userMgr.AddToRoleAsync(admin,Roles.Admin.ToString());
+                await userMgr.AddToRoleAsync(admin, Roles.Admin.ToString());
             }
-
-
-           
         }
     }
 }

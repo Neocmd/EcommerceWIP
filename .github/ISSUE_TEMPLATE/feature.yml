@@ -1,0 +1,50 @@
+name: Feature Request
+about: Define a fullstack feature with agent routing
+labels: ["type:feature"]
+body:
+  - type: input
+    id: business_goal
+    attributes:
+      label: Business goal
+      placeholder: What outcome should this feature drive?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impacted_areas
+    attributes:
+      label: Impacted areas
+      multiple: true
+      options:
+        - backend
+        - frontend
+        - database
+        - devops
+        - security
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      placeholder: List measurable criteria
+    validations:
+      required: true
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Out of scope
+      placeholder: What should not be changed?
+
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk level
+      options:
+        - low
+        - medium
+        - high
+    validations:
+      required: true
